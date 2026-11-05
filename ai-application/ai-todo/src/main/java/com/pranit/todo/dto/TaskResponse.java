@@ -1,0 +1,27 @@
+package com.pranit.todo.dto;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.UUID;
+
+public record TaskResponse(
+
+        UUID id,
+
+        String title,
+
+        String description,
+
+        boolean completed,
+
+        LocalDate startDate,
+
+        LocalDate endDate,
+
+        Instant createdAt,
+
+        Instant updatedAt,
+
+        Long version
+) {
+}

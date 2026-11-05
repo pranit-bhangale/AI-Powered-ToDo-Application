@@ -1,5 +1,6 @@
 package com.pranit.todo.security.service.impl;
 
+import com.pranit.todo.dto.TokenResponse;
 import com.pranit.todo.model.UserDetail;
 import com.pranit.todo.properties.KeysPathProperties;
 import com.pranit.todo.properties.TokenProperties;
@@ -31,7 +32,7 @@ public class GenerateTokenImpl implements GenerateToken {
     }
 
     @Override
-    public String generateAccessToken(final UserDetail userDetail) {
+    public TokenResponse generateAccessToken(final UserDetail userDetail) {
         final UUID userId = userDetail.id();
         final String username = userDetail.username();
         final Instant now = Instant.now();
@@ -41,7 +42,7 @@ public class GenerateTokenImpl implements GenerateToken {
                 .filter(Objects::nonNull)
                 .filter(authority -> authority.startsWith("ROLE_"))
                 .collect(Collectors.toUnmodifiableSet());
-        return Jwts.builder()
+        final String accessToken = Jwts.builder()
                 .id(userId.toString())
                 .subject(username)
                 .issuer(tokenProperties.token().issuer())
@@ -51,5 +52,10 @@ public class GenerateTokenImpl implements GenerateToken {
                 .claim("token", "access")
                 .signWith(this.privateKey)
                 .compact();
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer ")
+                .expiresIn(this.tokenProperties.accessToken().expiration())
+                .build();
     }
 }

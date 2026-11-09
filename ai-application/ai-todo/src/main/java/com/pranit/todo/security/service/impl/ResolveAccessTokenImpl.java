@@ -17,9 +17,7 @@ public class ResolveAccessTokenImpl implements ResolveAccessToken {
     @Override
     public String getAccessTokenFromRequest(final HttpServletRequest request) {
         final String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authorizationHeader == null || !authorizationHeader.regionMatches(
-                true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())
-        ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
             return null;
         }
         final String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();

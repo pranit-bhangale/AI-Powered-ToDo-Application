@@ -49,12 +49,13 @@ public class GenerateTokenImpl implements GenerateToken {
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .claim("roles", roles)
+                .claim("type", "Bearer")
                 .claim("token", "access")
                 .signWith(this.privateKey)
                 .compact();
         return TokenResponse.builder()
                 .accessToken(accessToken)
-                .tokenType("Bearer ")
+                .tokenType("Bearer")
                 .expiresIn(this.tokenProperties.accessToken().expiration())
                 .build();
     }

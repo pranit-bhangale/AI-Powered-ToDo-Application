@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -54,7 +55,7 @@ public class TodoController {
     @ApiResponse(responseCode = "400", description = "Invalid pagination or sort parameters")
     @GetMapping(version = "v1")
     public ResponseEntity<PageResponse<TodoResponse>> getTodos(
-            @Parameter(description = "Pagination configuration: page, size (1-100), sort (field,asc|desc)")
+            @ParameterObject
             @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         final PageResponse<TodoResponse> response = this.todoService.getTodos(pageable);
         return ResponseEntity.ok(response);

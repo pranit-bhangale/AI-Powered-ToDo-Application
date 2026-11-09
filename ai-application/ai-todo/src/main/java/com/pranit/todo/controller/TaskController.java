@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -60,7 +61,7 @@ public class TaskController {
     public ResponseEntity<PageResponse<TaskResponse>> getTasks(
             @Parameter(description = "UUID of the parent Todo")
             @PathVariable("todoId") UUID todoId,
-            @Parameter(description = "Pagination configuration: page, size (1-100), sort (field,asc|desc)")
+            @ParameterObject
             @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         final PageResponse<TaskResponse> response = this.taskService.getTasks(todoId, pageable);
         return ResponseEntity.ok(response);

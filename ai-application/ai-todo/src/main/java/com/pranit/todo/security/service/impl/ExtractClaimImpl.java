@@ -30,7 +30,6 @@ public class ExtractClaimImpl implements ExtractClaim {
         return claims.getSubject();
     }
 
-
     @Override
     public UUID getUserIdFromAccessToken(final Claims claims) {
         final String userId = claims.getId();
@@ -53,6 +52,8 @@ public class ExtractClaimImpl implements ExtractClaim {
 
     @Override
     public boolean isAccessToken(final Claims claims) {
-        return "access".equals(claims.get("type", String.class));
+        if (claims == null) return false;
+        return "Bearer".equals(claims.get("type", String.class))
+                && "access".equals(claims.get("token", String.class));
     }
 }

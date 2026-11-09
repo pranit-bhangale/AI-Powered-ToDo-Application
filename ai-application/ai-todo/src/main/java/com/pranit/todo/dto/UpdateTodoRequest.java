@@ -2,10 +2,12 @@ package com.pranit.todo.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Builder
 public record UpdateTodoRequest(
         @Size(min = 1, max = 100, message = "Todo title must be between 1 and 100 characters")
         String title,
@@ -14,7 +16,6 @@ public record UpdateTodoRequest(
         Boolean completed,
         LocalDate startDate,
         LocalDate endDate,
-        @Valid
-        List<UpdateTaskRequest> tasks
+        List<@Valid UpdateTaskRequest> tasks
 ) {
 }

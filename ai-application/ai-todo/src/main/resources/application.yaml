@@ -34,6 +34,7 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     out-of-order: false
+  # Spring AI Configuration
   ai:
     chat:
       client:
@@ -51,22 +52,29 @@ spring:
         temperature: 0.2
         max-completion-tokens: 2048
       timeout: 120s
+    # MCP Client Configuration
     mcp:
       client:
+        enabled: true
+        type: SYNC
+        initialized: true
+        request-timeout: 30s
         stdio:
           servers-configuration: classpath:servers.json
+# Security Configuration
 security:
   keys:
     private-key-path: ${PRIVATE_KEY_PATH}
     public-key-path: ${PUBLIC_KEY_PATH}
   access-token:
-    expiration: ${ACCESS_TOKEN_EXPIRATION}
+    expiration: ${ACCESS_TOKEN_EXPIRATION:900}
   token:
-    issuer: ${TOKEN_ISSUER}
+    issuer: ${TOKEN_ISSUER:todo}
+# Todo Configuration
 todo:
   cors:
     allowed-origins:
-      - ${CORS_ALLOWED_ORIGIN}
+      - "${CORS_ALLOWED_ORIGIN:http://localhost:5137}"
     allowed-methods:
       - GET
       - POST
@@ -77,7 +85,13 @@ todo:
     allowed-headers:
       - "*"
     allow-credentials: true
-  token-log:
-    dir: track
+# Token Logging Configuration
+token-log:
+  dir: track
   prefix: track
   preview-length: 200
+# Logging
+logging:
+  level:
+    org.springframework.ai.mcp: DEBUG
+    io.modelcontextprotocol: DEBUG

@@ -77,23 +77,51 @@ public final class Page {
             return Sort.unsorted();
         }
         final List<Sort.Order> orders = sort.stream()
-                .map(order -> {
-                    final String canonicalProperty = validateSortBy(order.getProperty(), allowedSortProperties);
-                    return order.withProperty(canonicalProperty);
-                })
+                .map(order -> parseAndValidateOrder(order, allowedSortProperties))
                 .toList();
         return Sort.by(orders);
     }
 
+    private static Sort.Order parseAndValidateOrder(
+            final Sort.Order order, final Map<String, String> allowedSortProperties) {
+        final String rawProperty = order.getProperty();
+        Assert.hasText(rawProperty, "Sort property must not be null or blank");
+
+        // Clean out brackets, quotes, and whitespace from Swagger / JSON serialization
+        String cleaned = rawProperty.replaceAll("[\\[\\]\"']", "").trim();
+
+        Sort.Direction direction = order.getDirection();
+        String propertyName = cleaned;
+
+        // Check if direction was included in the property string (e.g., "createdAt,desc" or "createdAt, desc")
+        if (cleaned.contains(",")) {
+            final String[] parts = cleaned.split(",", 2);
+            propertyName = parts[0].replaceAll("[\\[\\]\"']", "").trim();
+            final String dirPart = parts[1].replaceAll("[\\[\\]\"']", "").trim();
+            if (!dirPart.isEmpty()) {
+                if ("desc".equalsIgnoreCase(dirPart)) {
+                    direction = Sort.Direction.DESC;
+                } else if ("asc".equalsIgnoreCase(dirPart)) {
+                    direction = Sort.Direction.ASC;
+                }
+            }
+        }
+
+        if (propertyName.isBlank()) {
+            throw new InvalidRequestException("Sort property must not be blank.");
+        }
+
+        final String canonicalProperty = validateSortBy(propertyName, allowedSortProperties);
+        return new Sort.Order(direction, canonicalProperty);
+    }
+
     private static String validateSortBy(final String sortBy, final Map<String, String> allowedSortProperties) {
-        Assert.hasText(sortBy, "Sort property must not be null or blank");
-        final String trimmed = sortBy.trim();
         if (allowedSortProperties.isEmpty()) {
             throw new InvalidRequestException("Sorting is not supported for this query.");
         }
-        final String canonical = allowedSortProperties.get(trimmed);
+        final String canonical = allowedSortProperties.get(sortBy);
         if (canonical == null) {
-            throw new InvalidRequestException("Unsupported sort property: '" + trimmed + "'.");
+            throw new InvalidRequestException("Unsupported sort property: '" + sortBy + "'.");
         }
         return canonical;
     }

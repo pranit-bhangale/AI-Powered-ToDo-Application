@@ -1,0 +1,55 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:todo}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: false
+  ai:
+    chat:
+      client:
+        enabled: false
+    openai:
+      api-key: test-key
+      base-url: http://localhost:8080
+      chat:
+        model: gpt-4o-mini
+    mcp:
+      client:
+        enabled: false
+        stdio:
+          servers-configuration:
+
+security:
+  keys:
+    private-key-path: classpath:keys/private.pem
+    public-key-path: classpath:keys/public.pem
+  access-token:
+    expiration: 3600
+  token:
+    issuer: ai-todo
+
+todo:
+  cors:
+    allowed-origins:
+      - "*"
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+    allowed-headers:
+      - "*"
+    allow-credentials: false
+  token-log:
+    dir: track
+  prefix: track
+  preview-length: 200

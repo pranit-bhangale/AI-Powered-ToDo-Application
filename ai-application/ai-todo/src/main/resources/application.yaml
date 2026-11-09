@@ -55,12 +55,28 @@ spring:
       client:
         stdio:
           servers-configuration: classpath:servers.json
-#        streamable-http:
-#          connections:
-#            task-server:
-#              url: http://localhost:8081
-
+security:
+  keys:
+    private-key-path: ${PRIVATE_KEY_PATH}
+    public-key-path: ${PUBLIC_KEY_PATH}
+  access-token:
+    expiration: ${ACCESS_TOKEN_EXPIRATION}
+  token:
+    issuer: ${TOKEN_ISSUER}
 todo:
+  cors:
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN}
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowed-headers:
+      - "*"
+    allow-credentials: true
   token-log:
     dir: track
   prefix: track

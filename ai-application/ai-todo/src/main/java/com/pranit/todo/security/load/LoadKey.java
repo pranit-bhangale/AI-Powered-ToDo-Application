@@ -33,17 +33,18 @@ public class LoadKey {
             final PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
             return KeyFactory.getInstance("RSA").generatePrivate(spec);
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new ResourceNotFoundException("Failed to load private key: " + pemPath);
+            throw new ResourceNotFoundException("Failed to load private key from path: " + pemPath);
         }
     }
 
     private static void validatePemFile(final String path) {
-        if (path == null || path.isBlank())
-            throw new ResourceNotFoundException("Please provide a valid pem file path");
+        if (path == null || path.isBlank()) {
+            throw new InvalidRequestException("PEM key file path must not be null or blank.");
+        }
 
-        if (!path.toLowerCase().endsWith(".pem"))
-            throw new InvalidRequestException("Only .pem key files are supported");
-
+        if (!path.toLowerCase().endsWith(".pem")) {
+            throw new InvalidRequestException("Only .pem key files are supported. Provided path: " + path);
+        }
     }
 
     private static String readKey(final String keyPath) throws IOException {
@@ -59,8 +60,9 @@ public class LoadKey {
 
     private static String readKeyFromResource(final String resourcePath) throws IOException {
         try (final InputStream is = LoadKey.class.getClassLoader().getResourceAsStream(resourcePath)) {
-            if (is == null)
-                throw new ResourceNotFoundException("Key not found in classpath or filesystem: " + resourcePath);
+            if (is == null) {
+                throw new ResourceNotFoundException("Key file not found in classpath or filesystem: " + resourcePath);
+            }
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
@@ -68,15 +70,15 @@ public class LoadKey {
     public static PublicKey loadPublicKey(final String pemPath) {
         validatePemFile(pemPath);
         try {
-            final String Key = readKey(pemPath)
+            final String key = readKey(pemPath)
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
                     .replaceAll("\\s", "");
-            final byte[] decoded = Base64.getDecoder().decode(Key);
+            final byte[] decoded = Base64.getDecoder().decode(key);
             final X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
             return KeyFactory.getInstance("RSA").generatePublic(spec);
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new ResourceNotFoundException("Failed to load public key: " + pemPath);
+            throw new ResourceNotFoundException("Failed to load public key from path: " + pemPath);
         }
     }
 }

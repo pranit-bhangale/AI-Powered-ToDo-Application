@@ -14,8 +14,10 @@ import java.util.function.Function;
  * @param pageSize      the number of elements per page
  * @param totalElements the total number of elements across all pages
  * @param totalPages    the total number of pages
- * @param isLastPage    whether the current page is the last page
  * @param isFirstPage   whether the current page is the first page
+ * @param isLastPage    whether the current page is the last page
+ * @param hasNext       whether there is a next page
+ * @param hasPrevious   whether there is a previous page
  * @param <T>           the type of content elements
  */
 public record PageResponse<T>(
@@ -24,8 +26,10 @@ public record PageResponse<T>(
         int pageSize,
         long totalElements,
         int totalPages,
+        boolean isFirstPage,
         boolean isLastPage,
-        boolean isFirstPage
+        boolean hasNext,
+        boolean hasPrevious
 ) {
 
     public PageResponse {
@@ -55,81 +59,10 @@ public record PageResponse<T>(
                 page.getSize(),
                 page.getTotalElements(),
                 page.getTotalPages(),
+                page.isFirst(),
                 page.isLast(),
-                page.isFirst()
+                page.hasNext(),
+                page.hasPrevious()
         );
-    }
-
-    public static <T> Builder<T> builder() {
-        return new Builder<>();
-    }
-
-    public boolean hasNext() {
-        return !isLastPage;
-    }
-
-    public boolean hasPrevious() {
-        return !isFirstPage;
-    }
-
-    public int numberOfElements() {
-        return contents.size();
-    }
-
-    public boolean isEmpty() {
-        return contents.isEmpty();
-    }
-
-    public static final class Builder<T> {
-
-        private List<T> contents;
-        private int currentPage;
-        private int pageSize;
-        private long totalElements;
-        private int totalPages;
-        private boolean isLastPage;
-        private boolean isFirstPage;
-
-        private Builder() {
-        }
-
-        public Builder<T> contents(final List<T> contents) {
-            this.contents = contents;
-            return this;
-        }
-
-        public Builder<T> currentPage(final int currentPage) {
-            this.currentPage = currentPage;
-            return this;
-        }
-
-        public Builder<T> pageSize(final int pageSize) {
-            this.pageSize = pageSize;
-            return this;
-        }
-
-        public Builder<T> totalElements(final long totalElements) {
-            this.totalElements = totalElements;
-            return this;
-        }
-
-        public Builder<T> totalPages(final int totalPages) {
-            this.totalPages = totalPages;
-            return this;
-        }
-
-        public Builder<T> isLastPage(final boolean isLastPage) {
-            this.isLastPage = isLastPage;
-            return this;
-        }
-
-        public Builder<T> isFirstPage(final boolean isFirstPage) {
-            this.isFirstPage = isFirstPage;
-            return this;
-        }
-
-        public PageResponse<T> build() {
-            return new PageResponse<>(contents, currentPage, pageSize, totalElements, totalPages, isLastPage, isFirstPage);
-        }
     }
 }

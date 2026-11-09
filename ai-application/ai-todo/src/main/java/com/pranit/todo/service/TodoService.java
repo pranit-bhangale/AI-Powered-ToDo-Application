@@ -16,8 +16,6 @@ public interface TodoService {
 
     PageResponse<TodoResponse> getTodos(Pageable pageable);
 
-    PageResponse<TodoResponse> getTodosByUser(UUID userId, Pageable pageable);
-
     TodoResponse updateTodo(UUID todoId, UpdateTodoRequest request);
 
     void deleteTodo(UUID todoId);

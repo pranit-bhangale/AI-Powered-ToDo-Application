@@ -9,6 +9,7 @@ import java.util.UUID;
 @Builder
 public record TaskResponse(
         UUID id,
+        UUID todoId,
         String title,
         String description,
         boolean completed,

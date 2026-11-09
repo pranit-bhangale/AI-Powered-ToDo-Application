@@ -1,5 +1,6 @@
 package com.pranit.todo.entity;
 
+import com.pranit.todo.exception.InvalidRequestException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,6 +23,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -78,6 +80,7 @@ public class Todo {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @BatchSize(size = 50)
     @Builder.Default
     private List<Task> tasks = new ArrayList<>();
 
@@ -94,7 +97,9 @@ public class Todo {
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
-        if (startDate == null) startDate = LocalDate.now();
+        if (startDate == null) {
+            startDate = LocalDate.now();
+        }
     }
 
     @PreUpdate
@@ -105,28 +110,27 @@ public class Todo {
     public void addTask(Task task) {
         tasks.add(task);
         task.setTodo(this);
+        if (!task.isCompleted()) {
+            this.completed = false;
+        }
     }
 
-    public void removeTask(Task task) {
-        tasks.remove(task);
-        task.setTodo(null);
-        updateCompletionStatus();
-    }
-
-    public void updateCompletionStatus() {
-        if (tasks.isEmpty()) return;
-        completed = tasks.stream().allMatch(Task::isCompleted);
+    public boolean hasIncompleteTasks() {
+        return tasks != null && tasks.stream().anyMatch(task -> !task.isCompleted());
     }
 
     public void complete() {
-        if (!tasks.isEmpty()
-                && tasks.stream().anyMatch(task -> !task.isCompleted())) {
-            throw new IllegalStateException("Complete all tasks before completing this Todo");
+        if (!canBeCompleted()) {
+            throw new InvalidRequestException("Cannot complete Todo: all tasks in this todo must be completed first.");
         }
-        completed = true;
+        this.completed = true;
+    }
+
+    public boolean canBeCompleted() {
+        return tasks == null || tasks.isEmpty() || tasks.stream().allMatch(Task::isCompleted);
     }
 
     public void reopen() {
-        completed = false;
+        this.completed = false;
     }
 }

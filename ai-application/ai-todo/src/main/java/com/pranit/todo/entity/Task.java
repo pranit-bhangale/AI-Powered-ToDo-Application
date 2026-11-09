@@ -20,6 +20,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,12 +32,9 @@ import java.util.UUID;
         name = "tasks",
         indexes = {
                 @Index(name = "idx_tasks_todo_id", columnList = "todo_id"),
-                @Index(name = "idx_tasks_todo_completed",
-                        columnList = "todo_id, completed"),
-                @Index(name = "idx_tasks_todo_start_date",
-                        columnList = "todo_id, start_date"),
-                @Index(name = "idx_tasks_todo_end_date",
-                        columnList = "todo_id, end_date")
+                @Index(name = "idx_tasks_todo_completed", columnList = "todo_id, completed"),
+                @Index(name = "idx_tasks_todo_start_date", columnList = "todo_id, start_date"),
+                @Index(name = "idx_tasks_todo_end_date", columnList = "todo_id, end_date")
         },
         uniqueConstraints = {
                 @UniqueConstraint(
@@ -69,6 +68,7 @@ public class Task {
     @Column(name = "start_date", nullable = false, updatable = false)
     private LocalDate startDate = LocalDate.now();
 
+    @Column(name = "end_date")
     private LocalDate endDate;
 
     @Column(nullable = false, updatable = false)
@@ -78,6 +78,7 @@ public class Task {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "todo_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Todo todo;
 
     @Version
@@ -88,7 +89,9 @@ public class Task {
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
-        if (startDate == null) startDate = LocalDate.now();
+        if (startDate == null) {
+            startDate = LocalDate.now();
+        }
     }
 
     @PreUpdate
@@ -97,11 +100,13 @@ public class Task {
     }
 
     public void markCompleted() {
-        completed = true;
+        this.completed = true;
     }
 
     public void markIncomplete() {
-        completed = false;
-        if (todo != null) todo.reopen();
+        this.completed = false;
+        if (this.todo != null) {
+            this.todo.reopen();
+        }
     }
 }

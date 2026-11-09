@@ -41,10 +41,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void createNewAccount(final RegistrationRequest request) {
         if (this.userRepository.existsByUsername(request.username())) {
-            throw new DuplicateResourceException("Username already exists");
+            throw new DuplicateResourceException("Username '" + request.username() + "' is already taken. Please choose another username.");
         }
         if (this.userRepository.existsByEmail(request.email())) {
-            throw new DuplicateResourceException("Email already exists");
+            throw new DuplicateResourceException("Email '" + request.email() + "' is already registered. Please sign in or use another email.");
         }
         final User user = User.builder()
                 .username(request.username())
@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         );
         final Object principal = authentication.getPrincipal();
         if (!(principal instanceof UserDetail detail)) {
-            throw new BadCredentialsException("Invalid Username or password");
+            throw new BadCredentialsException("Invalid username or password.");
         }
         final TokenResponse response = this.generateToken.generateAccessToken(detail);
         return LoginResponse.builder()
@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
         if (authentication == null ||
                 !authentication.isAuthenticated() ||
                 !(authentication.getPrincipal() instanceof UserDetail principal)) {
-            throw new AuthenticationCredentialsNotFoundException("No authenticated user found");
+            throw new AuthenticationCredentialsNotFoundException("No authenticated user found in security context.");
         }
         final Set<String> roles = principal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

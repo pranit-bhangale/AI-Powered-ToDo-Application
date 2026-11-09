@@ -7,18 +7,13 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record CreateTaskRequest(
-
         @NotBlank(message = "Task title is required")
-        @Size(max = 100)
+        @Size(max = 100, message = "Task title cannot exceed 100 characters")
         String title,
-
-        @Size(max = 500)
+        @Size(max = 500, message = "Task description cannot exceed 500 characters")
         String description,
-
-        @FutureOrPresent(message = "Start date cannot be in the past")
+        @FutureOrPresent(message = "Start date must be today or in the future")
         LocalDate startDate,
-
         LocalDate endDate
-
 ) {
 }

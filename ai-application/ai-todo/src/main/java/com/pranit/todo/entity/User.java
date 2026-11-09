@@ -90,14 +90,4 @@ public class User {
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
-
-    public void addTodo(Todo todo) {
-        todos.add(todo);
-        todo.setUser(this);
-    }
-
-    public void removeTodo(Todo todo) {
-        todos.remove(todo);
-        todo.setUser(null);
-    }
 }

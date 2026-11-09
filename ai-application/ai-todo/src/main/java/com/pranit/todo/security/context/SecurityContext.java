@@ -16,12 +16,10 @@ public class SecurityContext {
 
     public static UUID getCurrentUserId() {
         final UUID userId = getUserDetail().id();
-        if (userId == null) throw new UnauthorizedException("Authenticated user ID not found");
+        if (userId == null) {
+            throw new UnauthorizedException("Authenticated user ID not found in security context.");
+        }
         return userId;
-    }
-
-    public static String getCurrentUserName() {
-        return getUserDetail().getUsername();
     }
 
     public static UserDetail getUserDetail() {
@@ -30,14 +28,17 @@ public class SecurityContext {
                 !authentication.isAuthenticated() ||
                 authentication instanceof AnonymousAuthenticationToken) {
             log.warn("User is not authenticated: {}", authentication);
-            throw new UnauthorizedException("User not authenticated");
+            throw new UnauthorizedException("User is not authenticated. Please provide a valid Bearer token.");
         }
         final Object principal = authentication.getPrincipal();
         if (!(principal instanceof UserDetail userDetail)) {
             log.warn("Invalid authentication principal: {}", principal);
-            throw new UnauthorizedException("Invalid authentication principal");
+            throw new UnauthorizedException("Invalid authentication principal. Expected UserDetail instance.");
         }
         return userDetail;
     }
-}
 
+    public static String getCurrentUserName() {
+        return getUserDetail().getUsername();
+    }
+}

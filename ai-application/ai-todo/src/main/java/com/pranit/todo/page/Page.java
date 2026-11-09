@@ -1,25 +1,20 @@
 package com.pranit.todo.page;
 
-import com.pranit.todo.wrapper.PageResponse;
+import com.pranit.todo.exception.InvalidRequestException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Function;
 
 /**
- * Provides pagination and content mapping utilities for Spring Data JPA.
+ * Provides pagination and sort validation utilities for Spring Data.
  */
 public final class Page {
 
@@ -28,38 +23,18 @@ public final class Page {
     public static final int MAX_PAGE_SIZE = 100;
 
     private Page() {
-        throw new UnsupportedOperationException("Pagination is a utility class and cannot be instantiated");
+        throw new UnsupportedOperationException("Page is a utility class and cannot be instantiated.");
     }
 
     /**
-     * Retrieves a page using a Spring Data Pageable without content mapping.
+     * Validates and sanitizes a Pageable against allowed sort properties and bounds.
      */
-    public static <E> PageResponse<E> paginate(
-            final JpaRepository<E, ?> repository,
+    public static Pageable validatePageable(
             final @Nullable Pageable pageable,
             final @Nullable Collection<String> allowedSortProperties
     ) {
-        return paginate(repository, pageable, allowedSortProperties, Function.identity());
-    }
-
-    /**
-     * Retrieves and maps a page using a Spring Data Pageable.
-     */
-    public static <E, D> PageResponse<D> paginate(
-            final JpaRepository<E, ?> repository,
-            final @Nullable Pageable pageable,
-            final @Nullable Collection<String> allowedSortProperties,
-            final Function<? super E, ? extends D> mapper
-    ) {
-        Assert.notNull(repository, "Repository must not be null");
-        Assert.notNull(mapper, "Mapper must not be null");
-        final Map<String, String> allowedProperties =
-                normalizeAllowedSortProperties(allowedSortProperties);
-        final Pageable safePageable =
-                validatePageable(pageable, allowedProperties);
-        final org.springframework.data.domain.Page<E> result =
-                repository.findAll(safePageable);
-        return PageResponse.from(result, mapper);
+        final Map<String, String> allowedProperties = normalizeAllowedSortProperties(allowedSortProperties);
+        return validatePageableInternal(pageable, allowedProperties);
     }
 
     private static Map<String, String> normalizeAllowedSortProperties(final @Nullable Collection<String> allowedSortProperties) {
@@ -75,7 +50,7 @@ public final class Page {
         return Collections.unmodifiableMap(normalized);
     }
 
-    private static Pageable validatePageable(final @Nullable Pageable pageable, final Map<String, String> allowedSortProperties) {
+    private static Pageable validatePageableInternal(final @Nullable Pageable pageable, final Map<String, String> allowedSortProperties) {
         if (pageable == null || pageable.isUnpaged()) {
             return PageRequest.of(0, DEFAULT_PAGE_SIZE);
         }
@@ -86,12 +61,15 @@ public final class Page {
     }
 
     private static void validatePageNumber(final int page) {
-        Assert.isTrue(page >= 0, "Page number must be greater than or equal to 0");
+        if (page < 0) {
+            throw new InvalidRequestException("Page number must be greater than or equal to 0.");
+        }
     }
 
     private static void validatePageSize(final int size) {
-        Assert.isTrue(size >= MIN_PAGE_SIZE && size <= MAX_PAGE_SIZE,
-                () -> "Page size must be between " + MIN_PAGE_SIZE + " and " + MAX_PAGE_SIZE);
+        if (size < MIN_PAGE_SIZE || size > MAX_PAGE_SIZE) {
+            throw new InvalidRequestException("Page size must be between " + MIN_PAGE_SIZE + " and " + MAX_PAGE_SIZE + ".");
+        }
     }
 
     private static Sort validateSort(final @Nullable Sort sort, final Map<String, String> allowedSortProperties) {
@@ -111,104 +89,12 @@ public final class Page {
         Assert.hasText(sortBy, "Sort property must not be null or blank");
         final String trimmed = sortBy.trim();
         if (allowedSortProperties.isEmpty()) {
-            throw new IllegalArgumentException("Sorting is not supported for this query");
+            throw new InvalidRequestException("Sorting is not supported for this query.");
         }
         final String canonical = allowedSortProperties.get(trimmed);
-        Assert.isTrue(canonical != null, () -> "Unsupported sort property: " + trimmed);
+        if (canonical == null) {
+            throw new InvalidRequestException("Unsupported sort property: '" + trimmed + "'.");
+        }
         return canonical;
-    }
-
-    /**
-     * Retrieves a page using a JPA specification and Spring Data Pageable without content mapping.
-     * The specification may be null to indicate unconstrained filtering.
-     */
-    public static <E> PageResponse<E> paginate(
-            final JpaSpecificationExecutor<E> repository,
-            final @Nullable Specification<E> specification,
-            final @Nullable Pageable pageable,
-            final @Nullable Collection<String> allowedSortProperties
-    ) {
-        return paginate(repository, specification, pageable, allowedSortProperties, Function.identity());
-    }
-
-    /**
-     * Retrieves and maps a page using a JPA specification and Spring Data Pageable.
-     * The specification may be null to indicate unconstrained filtering.
-     */
-    public static <E, D> PageResponse<D> paginate(
-            final JpaSpecificationExecutor<E> repository,
-            final @Nullable Specification<E> specification,
-            final @Nullable Pageable pageable,
-            final @Nullable Collection<String> allowedSortProperties,
-            final Function<? super E, ? extends D> mapper
-    ) {
-        Assert.notNull(repository, "Repository must not be null");
-        Assert.notNull(mapper, "Mapper must not be null");
-        final Map<String, String> allowedProperties = normalizeAllowedSortProperties(allowedSortProperties);
-        final Pageable safePageable = validatePageable(pageable, allowedProperties);
-        final Specification<E> targetSpecification = specification != null ? specification : Specification.unrestricted();
-        final org.springframework.data.domain.Page<E> result = repository.findAll(targetSpecification, safePageable);
-        return PageResponse.from(result, mapper);
-    }
-
-    /**
-     * Retrieves a page using a JPA specification and explicit pagination parameters without mapping.
-     */
-    public static <E> PageResponse<E> paginate(
-            final JpaSpecificationExecutor<E> repository,
-            final @Nullable Specification<E> specification,
-            final int page,
-            final int size,
-            final @Nullable String sortBy,
-            final @Nullable String sortDirection,
-            final @Nullable Collection<String> allowedSortProperties
-    ) {
-        return paginate(repository, specification, page, size, sortBy, sortDirection, allowedSortProperties, Function.identity());
-    }
-
-    /**
-     * Retrieves and maps a page using a JPA specification and explicit
-     * pagination and sorting parameters.
-     */
-    public static <E, D> PageResponse<D> paginate(
-            final JpaSpecificationExecutor<E> repository,
-            final @Nullable Specification<E> specification,
-            final int page,
-            final int size,
-            final @Nullable String sortBy,
-            final @Nullable String sortDirection,
-            final @Nullable Collection<String> allowedSortProperties,
-            final Function<? super E, ? extends D> mapper
-    ) {
-        Assert.notNull(repository, "Repository must not be null");
-        Assert.notNull(mapper, "Mapper must not be null");
-        validatePageNumber(page);
-        validatePageSize(size);
-
-        final Map<String, String> allowedProperties = normalizeAllowedSortProperties(allowedSortProperties);
-        final Sort safeSort;
-        if (sortBy != null && !sortBy.isBlank()) {
-            final String canonicalProperty = validateSortBy(sortBy, allowedProperties);
-            final Sort.Direction direction = parseSortDirection(sortDirection);
-            safeSort = Sort.by(direction, canonicalProperty);
-        } else {
-            safeSort = Sort.unsorted();
-        }
-
-        final Pageable pageable = PageRequest.of(page, size, safeSort);
-        final Specification<E> targetSpecification = specification != null ? specification : Specification.unrestricted();
-        final org.springframework.data.domain.Page<E> result = repository.findAll(targetSpecification, pageable);
-        return PageResponse.from(result, mapper);
-    }
-
-    private static Sort.Direction parseSortDirection(final @Nullable String sortDirection) {
-        if (sortDirection == null || sortDirection.isBlank()) {
-            return Sort.Direction.ASC;
-        }
-        return switch (sortDirection.trim().toLowerCase(Locale.ROOT)) {
-            case "asc" -> Sort.Direction.ASC;
-            case "desc" -> Sort.Direction.DESC;
-            default -> throw new IllegalArgumentException("Sort direction must be 'asc' or 'desc'");
-        };
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 public class PublicEndpointProviderImpl implements PublicEndpointProvider {
 
     private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/auth/register",
+            "/api/auth/login",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",

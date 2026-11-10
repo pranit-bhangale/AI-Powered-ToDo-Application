@@ -33,6 +33,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-mcp-client'
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-tool-search-advisor'
+    implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'

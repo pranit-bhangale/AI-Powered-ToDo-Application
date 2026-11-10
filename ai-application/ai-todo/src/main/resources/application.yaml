@@ -38,9 +38,9 @@ spring:
   ai:
     chat:
       client:
-        enabled: false
+        enabled: true
         tool-search-advisor:
-          enabled: false
+          enabled: true
           tool-index-type: lucene
           max-results: 3
           reference-tool-name-accumulation: true
@@ -52,6 +52,11 @@ spring:
         temperature: 0.2
         max-completion-tokens: 2048
       timeout: 120s
+    # SafeGuard Configuration
+    advisor:
+      safeguard:
+        blocked-words:
+          - env
     # MCP Client Configuration
     mcp:
       client:
